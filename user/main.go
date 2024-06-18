@@ -3,8 +3,12 @@ package main
 import (
 	"common/config"
 	"common/metrics"
+	"context"
 	"flag"
 	"fmt"
+	"log"
+	"os"
+	"user/app"
 )
 
 var configFile = flag.String("config", "application.yml", "config file")
@@ -23,8 +27,10 @@ func main() {
 		}
 		fmt.Println("携程已经启动")
 	}()
-	for {
-	}
 	//3.启动程序 grpc的服务
-
+	err := app.Run(context.Background())
+	if err != nil {
+		log.Panicln("app run error:", err)
+		os.Exit(-1)
+	}
 }
