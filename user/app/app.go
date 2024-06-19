@@ -2,6 +2,7 @@ package app
 
 import (
 	"common/config"
+	"common/discovery"
 	"common/logs"
 	"context"
 	"google.golang.org/grpc"
@@ -17,7 +18,7 @@ func Run(ctx context.Context) error {
 	//1.日志库
 	logs.InitLog(config.Conf.AppName)
 	//2.etcd
-
+	register := discovery.NewRegister()
 	//启动grpc
 	server := grpc.NewServer()
 
@@ -28,6 +29,11 @@ func Run(ctx context.Context) error {
 		}
 
 		//注册grpc server到ertc
+		err = register.Register(config.Conf.Etcd)
+		if err != nil {
+			logs.Fatal("user register listen err:%v", err)
+		}
+		//end
 
 		err = server.Serve(listen)
 		if err != nil {
@@ -36,7 +42,8 @@ func Run(ctx context.Context) error {
 	}()
 
 	stop := func() {
-		server.Stop()
+		server.Stop()    //关闭操作
+		register.Close() //操作
 		time.Sleep(3 * time.Second)
 		logs.Info("user grpc server stop")
 	}
