@@ -2,10 +2,9 @@ package app
 
 import (
 	"common/config"
+	"common/logs"
 	"context"
-	"fmt"
 	"google.golang.org/grpc"
-	"log"
 	"net"
 	"os"
 	"os/signal"
@@ -16,7 +15,7 @@ import (
 // 启动程序
 func Run(ctx context.Context) error {
 	//1.日志库
-
+	logs.InitLog(config.Conf.AppName)
 	//2.etcd
 
 	//启动grpc
@@ -25,21 +24,21 @@ func Run(ctx context.Context) error {
 	go func() {
 		listen, err := net.Listen("tcp", config.Conf.Grpc.Addr)
 		if err != nil {
-			log.Fatal("user grpc listen err:%v", err)
+			logs.Fatal("user grpc listen err:%v", err)
 		}
 
 		//注册grpc server到ertc
 
 		err = server.Serve(listen)
 		if err != nil {
-			log.Fatal("user grpc listen server err:%v", err)
+			logs.Fatal("user grpc listen server err:%v", err)
 		}
 	}()
 
 	stop := func() {
 		server.Stop()
 		time.Sleep(3 * time.Second)
-		fmt.Println("user grpc server stop")
+		logs.Info("user grpc server stop")
 	}
 
 	//期望有一个优雅启停 遇到中断 退出 终止 挂断
@@ -55,11 +54,11 @@ func Run(ctx context.Context) error {
 			switch s {
 			case syscall.SIGTERM, syscall.SIGQUIT, syscall.SIGINT:
 				stop()
-				log.Println("user app quit")
+				logs.Info("user app quit")
 				return nil
 			case syscall.SIGHUP:
 				stop()
-				log.Println("hang up!! user app quit")
+				logs.Info("hang up!! user app quit")
 				return nil
 			default:
 				return nil
