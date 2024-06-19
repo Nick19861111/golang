@@ -16,3 +16,10 @@ common->config->config.go文件，里面有一个初始化的方法
 
 ------
 
+日志库
+
+```
+go get github.com/charmbracelet/log@latest
+```
+
+关注类logs.go的类
