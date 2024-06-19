@@ -2,12 +2,10 @@ package app
 
 import (
 	"common/config"
-	"common/discovery"
 	"common/logs"
 	"context"
-	"core/repo"
-	"google.golang.org/grpc"
-	"net"
+	"fmt"
+	"gate/router"
 	"os"
 	"os/signal"
 	"syscall"
@@ -18,35 +16,16 @@ import (
 func Run(ctx context.Context) error {
 	//1.日志库
 	logs.InitLog(config.Conf.AppName)
-	//2.etcd
-	register := discovery.NewRegister()
-	//启动grpc
-	server := grpc.NewServer()
-	//数据库管理类
-	manager := repo.New()
+
 	go func() {
-		listen, err := net.Listen("tcp", config.Conf.Grpc.Addr)
-		if err != nil {
-			logs.Fatal("user grpc listen err:%v", err)
-		}
-
-		//注册grpc server到ertc
-		err = register.Register(config.Conf.Etcd)
-		if err != nil {
-			logs.Fatal("user register listen err:%v", err)
-		}
-		//end
-
-		err = server.Serve(listen)
-		if err != nil {
-			logs.Fatal("user grpc listen server err:%v", err)
+		//gin 启动注册路由
+		r := router.RegisterRouter()
+		if err := r.Run(fmt.Sprintf(":%s", config.Conf.HttpPort)); err != nil {
+			logs.Fatal("gate gin run is err:%v", err)
 		}
 	}()
 
 	stop := func() {
-		server.Stop()    //关闭操作
-		register.Close() //操作
-		manager.Close()  //关闭操作
 		time.Sleep(3 * time.Second)
 		logs.Info("user grpc server stop")
 	}
