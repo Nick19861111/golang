@@ -5,6 +5,7 @@ import (
 	"common/discovery"
 	"common/logs"
 	"context"
+	"core/repo"
 	"google.golang.org/grpc"
 	"net"
 	"os"
@@ -34,6 +35,9 @@ func Run(ctx context.Context) error {
 			logs.Fatal("user register listen err:%v", err)
 		}
 		//end
+
+		//数据库管理类
+		manager := repo.New()
 
 		err = server.Serve(listen)
 		if err != nil {
