@@ -12,6 +12,8 @@ import (
 	"os/signal"
 	"syscall"
 	"time"
+	"user/intermal/service"
+	"user/pb"
 )
 
 // 启动程序
@@ -36,6 +38,9 @@ func Run(ctx context.Context) error {
 			logs.Fatal("user register listen err:%v", err)
 		}
 		//end
+
+		//注册protobuf
+		pb.RegisterUserServiceServer(server, service.NewAccountService(manager))
 
 		err = server.Serve(listen)
 		if err != nil {

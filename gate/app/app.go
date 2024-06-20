@@ -12,24 +12,23 @@ import (
 	"time"
 )
 
-// 启动程序
+// Run 启动程序 启动grpc服务 启用http服务  启用日志 启用数据库
 func Run(ctx context.Context) error {
-	//1.日志库
+	//1.做一个日志库 info error fatal debug
 	logs.InitLog(config.Conf.AppName)
-
 	go func() {
-		//gin 启动注册路由
+		//gin 启动  注册一个路由
 		r := router.RegisterRouter()
-		if err := r.Run(fmt.Sprintf(":%s", config.Conf.HttpPort)); err != nil {
-			logs.Fatal("gate gin run is err:%v", err)
+		//http接口
+		if err := r.Run(fmt.Sprintf(":%d", config.Conf.HttpPort)); err != nil {
+			logs.Fatal("gate gin run err:%v", err)
 		}
 	}()
-
 	stop := func() {
+		//other
 		time.Sleep(3 * time.Second)
-		logs.Info("user grpc server stop")
+		logs.Info("stop app finish")
 	}
-
 	//期望有一个优雅启停 遇到中断 退出 终止 挂断
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, syscall.SIGTERM, syscall.SIGQUIT, syscall.SIGINT, syscall.SIGHUP)

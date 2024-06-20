@@ -13,16 +13,14 @@ type RedisManager struct {
 	ClusterCli *redis.ClusterClient //集群
 }
 
-// 创建一个redis客户端
 func NewRedis() *RedisManager {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	var clusterCli *redis.ClusterClient
 	var cli *redis.Client
 	addrs := config.Conf.Database.RedisConf.ClusterAddrs
-
 	if len(addrs) == 0 {
-		//单节点
+		//非集群 单节点
 		cli = redis.NewClient(&redis.Options{
 			Addr:         config.Conf.Database.RedisConf.Addr,
 			PoolSize:     config.Conf.Database.RedisConf.PoolSize,
@@ -37,18 +35,15 @@ func NewRedis() *RedisManager {
 			Password:     config.Conf.Database.RedisConf.Password,
 		})
 	}
-
-	//ping的操作
-	if clusterCli == nil {
+	if clusterCli != nil {
 		if err := clusterCli.Ping(ctx).Err(); err != nil {
-			logs.Fatal("redis cluster connect err%v", err)
+			logs.Fatal("redis cluster connect err:%v", err)
 			return nil
 		}
 	}
-
-	if cli == nil {
+	if cli != nil {
 		if err := cli.Ping(ctx).Err(); err != nil {
-			logs.Fatal("redis connect err%v", err)
+			logs.Fatal("redis connect err:%v", err)
 			return nil
 		}
 	}
@@ -56,22 +51,27 @@ func NewRedis() *RedisManager {
 		Cli:        cli,
 		ClusterCli: clusterCli,
 	}
-
 }
 
-// 关闭相关操作
 func (r *RedisManager) Close() {
-	//即成的关闭
 	if r.ClusterCli != nil {
 		if err := r.ClusterCli.Close(); err != nil {
-			logs.Error("redis ClusterCli close err%v", err)
+			logs.Error("redis cluster close err:%v", err)
 		}
 	}
-
-	//单机的
 	if r.Cli != nil {
 		if err := r.Cli.Close(); err != nil {
-			logs.Error("redis cli close err%v", err)
+			logs.Error("redis close err:%v", err)
 		}
 	}
+}
+
+func (r *RedisManager) Set(ctx context.Context, key, value string, expire time.Duration) error {
+	if r.ClusterCli != nil {
+		return r.ClusterCli.Set(ctx, key, value, expire).Err()
+	}
+	if r.Cli != nil {
+		return r.Cli.Set(ctx, key, value, expire).Err()
+	}
+	return nil
 }
