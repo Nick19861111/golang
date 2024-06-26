@@ -2,7 +2,7 @@ package biz
 
 import (
 	"errors"
-	"franework/msError"
+	"framework/msError"
 )
 
 const OK = 0

@@ -12,50 +12,45 @@ import (
 	"os/signal"
 	"syscall"
 	"time"
-	"user/intermal/service"
+	"user/internal/service"
 	"user/pb"
 )
 
-// 启动程序
+// Run 启动程序 启动grpc服务 启用http服务  启用日志 启用数据库
 func Run(ctx context.Context) error {
-	//1.日志库
+	//1.做一个日志库 info error fatal debug
 	logs.InitLog(config.Conf.AppName)
-	//2.etcd
+	//2. etcd注册中心 grpc服务注册到etcd中 客户端访问的时候 通过etcd获取grpc的地址
 	register := discovery.NewRegister()
-	//启动grpc
+	//启动grpc服务端
 	server := grpc.NewServer()
-	//数据库管理类
+	//注册 grpc service 需要数据库 mongo redis
+	//初始化 数据库管理
 	manager := repo.New()
 	go func() {
-		listen, err := net.Listen("tcp", config.Conf.Grpc.Addr)
+		lis, err := net.Listen("tcp", config.Conf.Grpc.Addr)
 		if err != nil {
-			logs.Fatal("user grpc listen err:%v", err)
+			logs.Fatal("user grpc server listen err:%v", err)
 		}
-
-		//注册grpc server到ertc
 		err = register.Register(config.Conf.Etcd)
 		if err != nil {
-			logs.Fatal("user register listen err:%v", err)
+			logs.Fatal("user grpc server register etcd err:%v", err)
 		}
-		//end
-
-		//注册protobuf
 		pb.RegisterUserServiceServer(server, service.NewAccountService(manager))
-
-		err = server.Serve(listen)
+		//阻塞操作
+		err = server.Serve(lis)
 		if err != nil {
-			logs.Fatal("user grpc listen server err:%v", err)
+			logs.Fatal("user grpc server run failed err:%v", err)
 		}
 	}()
-
 	stop := func() {
-		server.Stop()    //关闭操作
-		register.Close() //操作
-		manager.Close()  //关闭操作
+		server.Stop()
+		register.Close()
+		manager.Close()
+		//other
 		time.Sleep(3 * time.Second)
-		logs.Info("user grpc server stop")
+		logs.Info("stop app finish")
 	}
-
 	//期望有一个优雅启停 遇到中断 退出 终止 挂断
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, syscall.SIGTERM, syscall.SIGQUIT, syscall.SIGINT, syscall.SIGHUP)

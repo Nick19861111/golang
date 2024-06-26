@@ -1,16 +1,15 @@
+version: "3.5"
 services:
   nats:
     image: nats
-    container_name: nats
     ports:
       - "8222:8222"
       - "4222:4222"
     command: "--http_port 8222 "
     networks: ["nats"]
-  # 默认也会安装 etcdctl
-  etcd:
-    image: bitnami/etcd:${ETCD_VERSION}
+  Etcd:
     container_name: etcd3
+    image: bitnami/etcd:${ETCD_VERSION}
     deploy:
       replicas: 1
       restart_policy:
@@ -20,44 +19,34 @@ services:
       - ETCD_SNAPSHOT_COUNT=10000
       - ETCD_QUOTA_BACKEND_BYTES=6442450944
     privileged: true
+    volumes:
+      - ${ETCD_DIR}/data:/bitnami/etcd/data
     ports:
-      - ${ETCD_PORT}:2379 # 客户端接口的默认端口
-      - "2380:2380" # 集群间通信的默认端口
+      - ${ETCD_PORT}:2379
+      - 2380:2380
   mongo:
     image: mongo:4.2.1
-    container_name: mongo
     restart: always
+    container_name: mongo
     ports:
-      - "27017:27017"
+      - 27018:27017
+    volumes:
+      - ${MONGO_DIR}/db:/data/db # 挂载数据目录
+      - ${MONGO_DIR}/log:/var/log/mongodb  # 挂载日志目录
     privileged: true  # 设置容器的权限为root
     environment:
       MONGO_INITDB_ROOT_USERNAME: root  # 账号
       MONGO_INITDB_ROOT_PASSWORD: root123456
-  redis:
+  Redis:
+    container_name: redis6
     image: redis:${REDIS_VERSION}
-    container_name: redis
     restart: always
+    volumes:
+      - ${REDIS_DIR}/data:/data
+      - ${REDIS_DIR}/conf/redis.conf:/etc/redis/redis.conf
     ports:
       - ${REDIS_PORT}:6379
-  mysql:
-    image: mysql:${MYSQL_VERSION}
-    container_name: mysql
-    restart: always
-    ports:
-      - ${MYSQL_PORT}:3306
-    environment:
-      MYSQL_ROOT_PASSWORD: root
-  nacos:
-    image: nacos/nacos-server:v2.3.2-slim
-    container_name: nacos
-    restart: always
-    ports:
-      - "8848:8848"
-      - "9848:9848"
-      - "9849:9849"
-    environment:
-      - PREFER_HOST_MODE=hostname
-      - MODE=standalone
+    command: redis-server /etc/redis/redis.conf
 networks:
   nats:
     name: nats

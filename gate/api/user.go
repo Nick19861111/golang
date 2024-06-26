@@ -8,7 +8,7 @@ import (
 	"common/logs"
 	"common/rpc"
 	"context"
-	"franework/msError"
+	"framework/msError"
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
 	"time"
@@ -23,23 +23,25 @@ func NewUserHandler() *UserHandler {
 }
 
 func (u *UserHandler) Register(ctx *gin.Context) {
-	//接受参数
+	//接收参数
 	var req pb.RegisterParams
 	err2 := ctx.ShouldBindJSON(&req)
-
 	if err2 != nil {
 		common.Fail(ctx, biz.RequestDataError)
 		return
 	}
-
-	response, err := rpc.UserClient.Register(context.TODO(), &pb.RegisterParams{})
+	response, err := rpc.UserClient.Register(context.TODO(), &req)
 	if err != nil {
 		common.Fail(ctx, msError.ToError(err))
 		return
 	}
 	uid := response.Uid
-	logs.Info("uid is %s", uid)
-	//jwt token jwt的相关操作
+	if len(uid) == 0 {
+		common.Fail(ctx, biz.SqlError)
+		return
+	}
+	logs.Info("uid:%s", uid)
+	//gen token by uid jwt  A.B.C A部分头（定义加密算法） B部分 存储数据  C部分签名
 	claims := jwts.CustomClaims{
 		Uid: uid,
 		RegisteredClaims: jwt.RegisteredClaims{
@@ -48,11 +50,10 @@ func (u *UserHandler) Register(ctx *gin.Context) {
 	}
 	token, err := jwts.GenToken(&claims, config.Conf.Jwt.Secret)
 	if err != nil {
-		logs.Error("jwt gen token err: %v", err)
+		logs.Error("Register jwt gen token err:%v", err)
 		common.Fail(ctx, biz.Fail)
 		return
 	}
-	//end
 	result := map[string]any{
 		"token": token,
 		"serverInfo": map[string]any{
@@ -60,6 +61,5 @@ func (u *UserHandler) Register(ctx *gin.Context) {
 			"port": config.Conf.Services["connector"].ClientPort,
 		},
 	}
-
-	common.Sucess(ctx, result)
+	common.Success(ctx, result)
 }

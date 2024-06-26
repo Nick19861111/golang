@@ -1,11 +1,10 @@
-go 1.22
-
+go 1.21.0
 use (
 	gate
 	common
 	connector
 	core
-	franework
+	framework
 	game
 	hall
 	user

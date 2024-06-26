@@ -80,30 +80,26 @@ type GrpcConf struct {
 	Addr string `mapstructure:"addr"`
 }
 
-// 配置的初始化
-func InitConfig(configFile string) {
+// InitConfig 加载配置
+func InitConfig(confFile string) {
 	Conf = new(Config)
 	v := viper.New()
-	v.SetConfigFile(configFile)
-	v.WatchConfig() //监听文件是否发生变化
-	v.OnConfigChange(func(e fsnotify.Event) {
-		log.Println("配置文件已经修改:", e.Name)
+	v.SetConfigFile(confFile)
+	v.WatchConfig()
+	v.OnConfigChange(func(in fsnotify.Event) {
+		log.Println("配置文件被修改了")
 		err := v.Unmarshal(&Conf)
 		if err != nil {
-			panic(fmt.Errorf("读取配置文件修改出错,err:%v\n", err))
-			return
+			panic(fmt.Errorf("Unmarshal change config data,err:%v \n", err))
 		}
 	})
 	err := v.ReadInConfig()
 	if err != nil {
-		panic(fmt.Errorf("读取配置文件出错,err:%v\n", err))
-		return
+		panic(fmt.Errorf("读取配置文件出错,err:%v \n", err))
 	}
 	//解析
 	err = v.Unmarshal(&Conf)
-
 	if err != nil {
-		panic(fmt.Errorf("Unmarshal err:%v\n", err))
-		return
+		panic(fmt.Errorf("Unmarshal config data,err:%v \n", err))
 	}
 }

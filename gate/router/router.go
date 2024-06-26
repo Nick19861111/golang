@@ -4,24 +4,22 @@ import (
 	"common/config"
 	"common/rpc"
 	"gate/api"
+	"gate/auth"
 	"github.com/gin-gonic/gin"
 )
 
-// 注册路由 RegisterRouter
+// RegisterRouter 注册路由
 func RegisterRouter() *gin.Engine {
-	//发布和测试版
 	if config.Conf.Log.Level == "DEBUG" {
 		gin.SetMode(gin.DebugMode)
 	} else {
 		gin.SetMode(gin.ReleaseMode)
 	}
-
-	//初始化grpc的客户端
+	//初始化grpc的client gate是做为grpc的客户端 去调用user grpc服务
 	rpc.Init()
-	//end
 	r := gin.Default()
-	userhandler := api.NewUserHandler()
-
-	r.POST("/register", userhandler.Register)
+	r.Use(auth.Cors())
+	userHandler := api.NewUserHandler()
+	r.POST("/register", userHandler.Register)
 	return r
 }

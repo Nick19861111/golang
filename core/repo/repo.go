@@ -2,13 +2,12 @@ package repo
 
 import "common/database"
 
-// 统一管理相关操作
 type Manager struct {
 	Mongo *database.MongoManager
 	Redis *database.RedisManager
 }
 
-func (m Manager) Close() {
+func (m *Manager) Close() {
 	if m.Mongo != nil {
 		m.Mongo.Close()
 	}

@@ -1,4 +1,4 @@
-HttpPort: 13000
+httpPort: 13000
 metricPort: 5855
 appName: gate
 log:

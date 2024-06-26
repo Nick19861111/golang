@@ -17,20 +17,19 @@ var (
 )
 
 func Init() {
-	//etcd 解析器
+	//etcd解析器 就可以grpc连接的时候 进行触发，通过提供的addr地址 去etcd中进行查找
 	r := discovery.NewResolver(config.Conf.Etcd)
 	resolver.Register(r)
-	//end
 	userDomain := config.Conf.Domain["user"]
 	initClient(userDomain.Name, userDomain.LoadBalance, &UserClient)
 }
 
-func initClient(name string, LoadBalance bool, client interface{}) {
-	//服务器的地址
+func initClient(name string, loadBalance bool, client interface{}) {
+	//找服务的地址
 	addr := fmt.Sprintf("etcd:///%s", name)
 	opts := []grpc.DialOption{
 		grpc.WithTransportCredentials(insecure.NewCredentials())}
-	if LoadBalance {
+	if loadBalance {
 		opts = append(opts, grpc.WithDefaultServiceConfig(fmt.Sprintf(`{"LoadBalancingPolicy": "%s"}`, "round_robin")))
 	}
 	conn, err := grpc.DialContext(context.TODO(), addr, opts...)
@@ -41,6 +40,6 @@ func initClient(name string, LoadBalance bool, client interface{}) {
 	case *pb.UserServiceClient:
 		*c = pb.NewUserServiceClient(conn)
 	default:
-		logs.Fatal("rpc client type error")
+		logs.Fatal("unsupported client type")
 	}
 }
