@@ -19,8 +19,8 @@ var (
 )
 
 type WsConnection struct {
-	Cid       string
-	Conn      *websocket.Conn
+	Cid       string          //客户端的id
+	Conn      *websocket.Conn //
 	manager   *Manager
 	ReadChan  chan *MsgPack
 	WriteChan chan []byte
@@ -43,12 +43,14 @@ func (c *WsConnection) Close() {
 }
 
 func (c *WsConnection) Run() {
+	//启动客户端的读取相关
 	go c.readMessage()
 	go c.writeMessage()
 	//做一些心跳检测 websocket中 ping pong机制
 	c.Conn.SetPongHandler(c.PongHandler)
 }
 
+// 服务器给客户端写消息
 func (c *WsConnection) writeMessage() {
 	ticker := time.NewTicker(pingInterval)
 	for {
@@ -74,8 +76,10 @@ func (c *WsConnection) writeMessage() {
 	}
 }
 
+// 读取客户端的发送过来的消息
 func (c *WsConnection) readMessage() {
 	defer func() {
+		//删除的客户端的id
 		c.manager.removeClient(c)
 	}()
 	c.Conn.SetReadLimit(maxMessageSize)
@@ -84,6 +88,7 @@ func (c *WsConnection) readMessage() {
 		return
 	}
 	for {
+		//读取消息的核心代码
 		messageType, message, err := c.Conn.ReadMessage()
 		if err != nil {
 			break
@@ -100,8 +105,10 @@ func (c *WsConnection) readMessage() {
 			logs.Error("unsupported message type : %d", messageType)
 		}
 	}
+	//end
 }
 
+// 心跳接受
 func (c *WsConnection) PongHandler(data string) error {
 	if err := c.Conn.SetReadDeadline(time.Now().Add(pongWait)); err != nil {
 		return err

@@ -2,7 +2,6 @@ package game
 
 import (
 	"common/logs"
-	"encoding/json"
 	"fmt"
 	"github.com/fsnotify/fsnotify"
 	"github.com/spf13/viper"
@@ -12,8 +11,17 @@ import (
 	"path"
 )
 
+/**
+读取配置文件相关操作
+*/
+
+import (
+	"encoding/json"
+)
+
 var Conf *Config
 
+// 对应的文件名
 const (
 	gameConfig = "gameConfig.json"
 	servers    = "servers.json"
@@ -51,14 +59,19 @@ type NatsConfig struct {
 
 type GameConfigValue map[string]any
 
+// 初始化读取对应目录的相关文件
 func InitConfig(configDir string) {
 	Conf = new(Config)
+	//通过系统读取目录
 	dir, err := os.ReadDir(configDir)
+	//读取成功
 	if err != nil {
 		logs.Fatal("read config dir err:%v", err)
 	}
+	//循环出对应的json文件进行读取
 	for _, v := range dir {
 		configFile := path.Join(configDir, v.Name())
+		//判断是目录下对应的文件
 		if v.Name() == gameConfig {
 			readGameConfig(configFile)
 		}
@@ -94,6 +107,7 @@ func readServersConfig(configFile string) {
 	typeServersConfig()
 }
 
+// 读取服务器节点的配置
 func typeServersConfig() {
 	if len(Conf.ServersConf.Servers) > 0 {
 		if Conf.ServersConf.TypeServer == nil {
@@ -108,6 +122,7 @@ func typeServersConfig() {
 	}
 }
 
+// 读取游戏的配置
 func readGameConfig(configFile string) {
 	//gc := make(map[string]GameConfigValue)
 	//v := viper.New()
@@ -141,6 +156,7 @@ func readGameConfig(configFile string) {
 		panic(err)
 	}
 	var gc map[string]GameConfigValue
+	//解析对应的数据
 	err = json.Unmarshal(data, &gc)
 	if err != nil {
 		panic(err)
@@ -148,6 +164,7 @@ func readGameConfig(configFile string) {
 	Conf.GameConfig = gc
 }
 
+// 获得Connector 集群
 func (c *Config) GetConnector(serverId string) *ConnectorConfig {
 	for _, v := range c.ServersConf.Connector {
 		if v.ID == serverId {

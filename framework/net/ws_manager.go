@@ -16,6 +16,7 @@ import (
 	"time"
 )
 
+// websocket的相关配置
 var (
 	websocketUpgrade = websocket.Upgrader{
 		CheckOrigin: func(r *http.Request) bool {
@@ -26,13 +27,15 @@ var (
 	}
 )
 
+//end
+
 type CheckOriginHandler func(r *http.Request) bool
 type Manager struct {
 	sync.RWMutex
 	websocketUpgrade   *websocket.Upgrader
 	ServerId           string
 	CheckOriginHandler CheckOriginHandler
-	clients            map[string]Connection
+	clients            map[string]Connection //客户端
 	ClientReadChan     chan *MsgPack
 	handlers           map[protocol.PackageType]EventHandler
 	ConnectorHandlers  LogicHandler
@@ -52,6 +55,7 @@ func (m *Manager) Run(addr string) {
 	logs.Fatal("connector listen serve err:%v", http.ListenAndServe(addr, nil))
 }
 
+// ws 的相关
 func (m *Manager) serveWS(w http.ResponseWriter, r *http.Request) {
 	//websocket 基于http
 	if m.websocketUpgrade == nil {
@@ -62,31 +66,40 @@ func (m *Manager) serveWS(w http.ResponseWriter, r *http.Request) {
 		logs.Error("websocketUpgrade.Upgrade err:%v", err)
 		return
 	}
+	//客户端链接到服务器
 	client := NewWsConnection(wsConn, m)
+	//加入到一个集合里面
 	m.addClient(client)
 	client.Run()
 }
 
+// 把客户端加入到集合里面
 func (m *Manager) addClient(client *WsConnection) {
+	//这里不明白具体是做什么
 	m.Lock()
 	defer m.Unlock()
+	//end
 	m.clients[client.Cid] = client
 }
 
+// 删除客户端
 func (m *Manager) removeClient(wc *WsConnection) {
 	for cid, c := range m.clients {
 		if cid == wc.Cid {
 			c.Close()
+			//必须要删除对应的uid
 			delete(m.clients, cid)
 		}
 	}
 }
 
+// 重点方法 客户端读取相关的数据
 func (m *Manager) clientReadChanHandler() {
 	for {
 		select {
 		case body, ok := <-m.ClientReadChan:
 			if ok {
+				//解析数据
 				m.decodeClientPack(body)
 			}
 		}
