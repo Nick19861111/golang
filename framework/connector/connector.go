@@ -58,6 +58,7 @@ func (c *Connector) Serve(serverId string) {
 	c.wsManager.Run(addr)
 }
 
+// 注册事件
 func (c *Connector) RegisterHandler(handlers net.LogicHandler) {
 	c.handlers = handlers
 }

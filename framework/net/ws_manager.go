@@ -140,6 +140,9 @@ func (m *Manager) routeEvent(packet *protocol.Packet, cid string) error {
 	return errors.New("no client found")
 }
 
+/*
+*消息处理器
+ */
 func (m *Manager) setupEventHandlers() {
 	m.handlers[protocol.Handshake] = m.HandshakeHandler
 	m.handlers[protocol.HandshakeAck] = m.HandshakeAckHandler
@@ -148,6 +151,7 @@ func (m *Manager) setupEventHandlers() {
 	m.handlers[protocol.Kick] = m.KickHandler
 }
 
+// 握手消息
 func (m *Manager) HandshakeHandler(packet *protocol.Packet, c Connection) error {
 	res := protocol.HandshakeResponse{
 		Code: 200,
@@ -181,6 +185,7 @@ func (m *Manager) HeartbeatHandler(packet *protocol.Packet, c Connection) error 
 	return c.SendMessage(buf)
 }
 
+// 数据处理的核心方法
 func (m *Manager) MessageHandler(packet *protocol.Packet, c Connection) error {
 	message := packet.MessageBody()
 	logs.Info("receiver message body, type=%v, router=%v, data:%v",

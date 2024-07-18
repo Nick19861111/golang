@@ -40,6 +40,7 @@ func (h *EntryHandler) Entry(session *net.Session, body []byte) (any, error) {
 		return common.F(biz.SqlError), nil
 	}
 	session.Uid = uid
+	//进入游戏返回用户信息和一个游戏的配置信息
 	return common.S(map[string]any{
 		"userInfo": user,
 		"config":   game.Conf.GetFrontGameConfig(),
