@@ -19,12 +19,13 @@ var (
 )
 
 type WsConnection struct {
-	Cid       string          //客户端的id
-	Conn      *websocket.Conn //
-	manager   *Manager
-	ReadChan  chan *MsgPack
-	WriteChan chan []byte
-	Session   *Session
+	Cid        string
+	Conn       *websocket.Conn
+	manager    *Manager
+	ReadChan   chan *MsgPack
+	WriteChan  chan []byte
+	Session    *Session
+	pingTicker *time.Ticker
 }
 
 func (c *WsConnection) GetSession() *Session {
@@ -40,19 +41,21 @@ func (c *WsConnection) Close() {
 	if c.Conn != nil {
 		c.Conn.Close()
 	}
+	if c.pingTicker != nil {
+		c.pingTicker.Stop()
+	}
 }
 
 func (c *WsConnection) Run() {
-	//启动客户端的读取相关
 	go c.readMessage()
 	go c.writeMessage()
 	//做一些心跳检测 websocket中 ping pong机制
 	c.Conn.SetPongHandler(c.PongHandler)
 }
 
-// 服务器给客户端写消息
 func (c *WsConnection) writeMessage() {
-	ticker := time.NewTicker(pingInterval)
+
+	c.pingTicker = time.NewTicker(pingInterval)
 	for {
 		select {
 		case message, ok := <-c.WriteChan:
@@ -65,21 +68,20 @@ func (c *WsConnection) writeMessage() {
 			if err := c.Conn.WriteMessage(websocket.BinaryMessage, message); err != nil {
 				logs.Error("client[%s] write message err :%v", c.Cid, err)
 			}
-		case <-ticker.C:
+		case <-c.pingTicker.C:
 			if err := c.Conn.SetWriteDeadline(time.Now().Add(writeWait)); err != nil {
 				logs.Error("client[%s] ping SetWriteDeadline err :%v", c.Cid, err)
 			}
 			if err := c.Conn.WriteMessage(websocket.PingMessage, nil); err != nil {
 				logs.Error("client[%s] ping  err :%v", c.Cid, err)
+				c.Close()
 			}
 		}
 	}
 }
 
-// 读取客户端的发送过来的消息
 func (c *WsConnection) readMessage() {
 	defer func() {
-		//删除的客户端的id
 		c.manager.removeClient(c)
 	}()
 	c.Conn.SetReadLimit(maxMessageSize)
@@ -88,7 +90,6 @@ func (c *WsConnection) readMessage() {
 		return
 	}
 	for {
-		//读取消息的核心代码
 		messageType, message, err := c.Conn.ReadMessage()
 		if err != nil {
 			break
@@ -105,10 +106,8 @@ func (c *WsConnection) readMessage() {
 			logs.Error("unsupported message type : %d", messageType)
 		}
 	}
-	//end
 }
 
-// 心跳接受
 func (c *WsConnection) PongHandler(data string) error {
 	if err := c.Conn.SetReadDeadline(time.Now().Add(pongWait)); err != nil {
 		return err

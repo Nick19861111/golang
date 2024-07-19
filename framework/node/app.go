@@ -41,6 +41,7 @@ func (a *App) readChanMsg() {
 			var remoteMsg remote.Msg
 			json.Unmarshal(msg, &remoteMsg)
 			session := remote.NewSession(a.remoteCli, &remoteMsg)
+			session.SetData(remoteMsg.SessionData)
 			//根据路由消息 发送给对应的handler进行处理
 			router := remoteMsg.Router
 			if handlerFunc := a.handlers[router]; handlerFunc != nil {

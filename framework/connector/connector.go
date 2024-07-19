@@ -21,7 +21,6 @@ func Default() *Connector {
 	}
 }
 
-// 运动方法
 func (c *Connector) Run(serverId string) {
 	if !c.isRunning {
 		//启动websocket和nats
@@ -34,8 +33,6 @@ func (c *Connector) Run(serverId string) {
 		c.Serve(serverId)
 	}
 }
-
-// 关闭
 func (c *Connector) Close() {
 	if c.isRunning {
 		//关闭websocket和nats
@@ -43,7 +40,6 @@ func (c *Connector) Close() {
 	}
 }
 
-// websocket 的启动方式
 func (c *Connector) Serve(serverId string) {
 	logs.Info("run connector:%v", serverId)
 	//地址 需要读取配置文件 在游戏中可能加载很多的信息（配置） 如果写到yml可能会比较复杂 不容易维护
@@ -58,7 +54,6 @@ func (c *Connector) Serve(serverId string) {
 	c.wsManager.Run(addr)
 }
 
-// 注册事件
 func (c *Connector) RegisterHandler(handlers net.LogicHandler) {
 	c.handlers = handlers
 }
