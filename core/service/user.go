@@ -12,6 +12,7 @@ import (
 	"fmt"
 	"framework/game"
 	"framework/msError"
+	hall "hall/models/request"
 	"time"
 )
 
@@ -65,7 +66,7 @@ func (s *UserService) UpdateUserAddressByUid(uid string, req hall.UpdateUserAddr
 	}
 	err := s.userDao.UpdateUserAddressByUid(context.TODO(), user)
 	if err != nil {
-		logs.Error("[UserService] UpdateUserAddressByUid user err:%v", err)
+		logs.Error("userDao.UpdateUserAddressByUid err:%v", err)
 		return err
 	}
 	return nil

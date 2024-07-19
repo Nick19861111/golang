@@ -6,6 +6,10 @@ import (
 	"framework/remote"
 )
 
+/**
+节点服务器的相关类，重要的核心类
+*/
+
 // App 就是nats的客户端 处理实际游戏逻辑的服务
 type App struct {
 	remoteCli remote.Client
@@ -33,6 +37,7 @@ func (a *App) Run(serverId string) error {
 	return nil
 }
 
+// 收到消息
 func (a *App) readChanMsg() {
 	//收到的是 其他nas client发送的消息
 	for {
@@ -54,7 +59,7 @@ func (a *App) readChanMsg() {
 				message.Data = body
 				//得到结果了 发送给connector
 				responseMsg := &remote.Msg{
-					Src:  remoteMsg.Dst,
+					Src:  remoteMsg.Dst, //目标的位置
 					Dst:  remoteMsg.Src,
 					Body: message,
 					Uid:  remoteMsg.Uid,
