@@ -131,13 +131,13 @@ func (r *Register) watcher() {
 				r.etcdCli.Close()
 			}
 			logs.Info("unregister etcd...")
-		case <-r.keepAliveCh:
-			//logs.Info("续约成功,%v", res)
-			//if res != nil {
-			//	if err := r.register(); err != nil {
-			//		logs.Error("keepAliveCh register failed,err:%v", err)
-			//	}
-			//}
+		case res := <-r.keepAliveCh:
+			if res == nil {
+				if err := r.unregister(); err != nil {
+					logs.Error("keeepAlive failed,err:%v", err)
+				}
+				logs.Info("续约重新注册成功，%v", res)
+			}
 		case <-ticker.C:
 			if r.keepAliveCh == nil {
 				if err := r.register(); err != nil {

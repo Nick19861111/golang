@@ -22,7 +22,7 @@ type Resolver struct {
 }
 
 // Build 当grpc.Dial的时候 就会同步调用此方法
-func (r Resolver) Build(target resolver.Target, cc resolver.ClientConn, opts resolver.BuildOptions) (resolver.Resolver, error) {
+func (r *Resolver) Build(target resolver.Target, cc resolver.ClientConn, opts resolver.BuildOptions) (resolver.Resolver, error) {
 	//获取到调用的key（user/v1）连接etcd 获取其value
 	r.cc = cc
 	//1.连接etcd
@@ -46,11 +46,11 @@ func (r Resolver) Build(target resolver.Target, cc resolver.ClientConn, opts res
 	return nil, nil
 }
 
-func (r Resolver) Scheme() string {
+func (r *Resolver) Scheme() string {
 	return "etcd"
 }
 
-func (r Resolver) sync() error {
+func (r *Resolver) sync() error {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(r.conf.RWTimeout)*time.Second)
 	defer cancel()
 	// user/v1/xxx:1111
@@ -87,12 +87,12 @@ func (r Resolver) sync() error {
 	return nil
 }
 
-func (r Resolver) watch() {
+func (r *Resolver) watch() {
 	//1. 定时 1分钟同步一次数据
 	//2. 监听节点的事件 从而触发不同的操作
 	//3. 监听Close事件 关闭 etcd
-	r.watchCh = r.etcdCli.Watch(context.Background(), r.key, clientv3.WithPrefix())
 	ticker := time.NewTicker(time.Minute)
+	r.watchCh = r.etcdCli.Watch(context.Background(), r.key, clientv3.WithPrefix())
 	for {
 		select {
 		case <-r.closeCh:
@@ -112,7 +112,7 @@ func (r Resolver) watch() {
 	}
 }
 
-func (r Resolver) update(events []*clientv3.Event) {
+func (r *Resolver) update(events []*clientv3.Event) {
 	for _, ev := range events {
 		switch ev.Type {
 		case clientv3.EventTypePut:
@@ -156,12 +156,13 @@ func (r Resolver) update(events []*clientv3.Event) {
 	}
 }
 
-func (r Resolver) Close() {
+func (r *Resolver) Close() {
 	if r.etcdCli != nil {
 		err := r.etcdCli.Close()
 		if err != nil {
 			logs.Error("Resolver close etcd err:%v", err)
 		}
+		logs.Info("close etcd success")
 	}
 }
 
