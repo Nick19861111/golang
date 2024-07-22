@@ -16,6 +16,7 @@ type UserHandler struct {
 	userService *service.UserService
 }
 
+// 收到用户发送过来的地址信息，然后返回对象的操作
 func (h *UserHandler) UpdateUserAddress(session *remote.Session, msg []byte) any {
 	logs.Info("UpdateUserAddress msg:%v", string(msg))
 	var req request.UpdateUserAddressReq

@@ -3,7 +3,7 @@
     "value": {
       "AccessKeyId": "111",
       "AccessKeySecret": "222",
-      "SignName": "码神之路",
+      "SignName": "超神之路",
       "TemplateCode": "333"
     },
     "describe": "阿里云短信验证码配置参数",
@@ -50,7 +50,7 @@
   },
 
   "loopBroadcastContent": {
-    "value": "码神之路棋牌游戏go后端实战教程,大厂技术专家带你学go",
+    "value": "nick后段实践,大厂技术专家带你学go",
     "describe": "循环广播内容"
   },
 

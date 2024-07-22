@@ -39,6 +39,7 @@ func NewSession(client Client, msg *Msg) *Session {
 	return s
 }
 
+// 获得当前用户的uid
 func (s *Session) GetUid() string {
 	return s.msg.Uid
 }
