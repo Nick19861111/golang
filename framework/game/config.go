@@ -46,7 +46,7 @@ type ConnectorConfig struct {
 	ServerType string `json:"serverType" `
 }
 type NatsConfig struct {
-	Url string `json:"url" mapstructure:"db"`
+	Url string `json:"url" mapstructure:"url"`
 }
 
 type GameConfigValue map[string]any

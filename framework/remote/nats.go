@@ -36,7 +36,6 @@ func (c *NatsClient) Close() error {
 	return nil
 }
 
-// 核心nats收消息部分
 func (c *NatsClient) sub() {
 	_, err := c.conn.Subscribe(c.serverId, func(msg *nats.Msg) {
 		//收到的其他nats client发送的消息
@@ -46,8 +45,6 @@ func (c *NatsClient) sub() {
 		logs.Error("nats sub err:%v", err)
 	}
 }
-
-// 发送消息
 func (c *NatsClient) SendMsg(dst string, data []byte) error {
 	if c.conn != nil {
 		return c.conn.Publish(dst, data)

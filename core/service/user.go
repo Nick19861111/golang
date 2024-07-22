@@ -20,12 +20,11 @@ type UserService struct {
 	userDao *dao.UserDao
 }
 
-// 这里是查询和保存对应的数据缓存方法
-func (s *UserService) FindAndSaveByUid(ctx context.Context, uid string, info request.UserInfo) (*entity.User, error) {
+func (s *UserService) FindAndSaveUserByUid(ctx context.Context, uid string, info request.UserInfo) (*entity.User, error) {
 	//查询mongo 有 返回 没有 新增
 	user, err := s.userDao.FindUserByUid(ctx, uid)
 	if err != nil {
-		logs.Error("[UserService] FindAndSaveByUid  user err:%v", err)
+		logs.Error("[UserService] FindAndSaveUserByUid  user err:%v", err)
 		return nil, err
 	}
 	if user == nil {
@@ -40,24 +39,23 @@ func (s *UserService) FindAndSaveByUid(ctx context.Context, uid string, info req
 		user.LastLoginTime = time.Now().UnixMilli()
 		err = s.userDao.Insert(context.TODO(), user)
 		if err != nil {
-			logs.Error("[UserService] FindAndSaveByUid insert user err:%v", err)
+			logs.Error("[UserService] FindAndSaveUserByUid insert user err:%v", err)
 			return nil, err
 		}
 	}
 	return user, nil
 }
 
-// 根据用户的id获取用户的对象
 func (s *UserService) FindUserByUid(ctx context.Context, uid string) (*entity.User, *msError.Error) {
+	//查询mongo 有 返回 没有 新增
 	user, err := s.userDao.FindUserByUid(ctx, uid)
 	if err != nil {
-		logs.Error("[UserService] FindUserByUid user err:%v", err)
+		logs.Error("[UserService] FindUserByUid  user err:%v", err)
 		return nil, biz.SqlError
 	}
 	return user, nil
 }
 
-// 根据用户的uid获取地址信息
 func (s *UserService) UpdateUserAddressByUid(uid string, req hall.UpdateUserAddressReq) error {
 	user := &entity.User{
 		Uid:      uid,
@@ -72,7 +70,6 @@ func (s *UserService) UpdateUserAddressByUid(uid string, req hall.UpdateUserAddr
 	return nil
 }
 
-// 创建对应的dao对象
 func NewUserService(r *repo.Manager) *UserService {
 	return &UserService{
 		userDao: dao.NewUserDao(r),

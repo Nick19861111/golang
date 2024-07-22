@@ -162,7 +162,7 @@ func (r *Resolver) Close() {
 		if err != nil {
 			logs.Error("Resolver close etcd err:%v", err)
 		}
-		logs.Info("close etcd success")
+		logs.Info("close etcd...")
 	}
 }
 

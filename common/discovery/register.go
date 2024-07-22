@@ -132,11 +132,12 @@ func (r *Register) watcher() {
 			}
 			logs.Info("unregister etcd...")
 		case res := <-r.keepAliveCh:
+			//如果etcd重启了 相当于连接断开 需要进行重新连接 res==nil
 			if res == nil {
-				if err := r.unregister(); err != nil {
-					logs.Error("keeepAlive failed,err:%v", err)
+				if err := r.register(); err != nil {
+					logs.Error("keepAliveCh register failed,err:%v", err)
 				}
-				logs.Info("续约重新注册成功，%v", res)
+				logs.Info("续约重新注册成功,%v", res)
 			}
 		case <-ticker.C:
 			if r.keepAliveCh == nil {

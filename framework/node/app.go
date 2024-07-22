@@ -6,10 +6,6 @@ import (
 	"framework/remote"
 )
 
-/**
-节点服务器的相关类，重要的核心类
-*/
-
 // App 就是nats的客户端 处理实际游戏逻辑的服务
 type App struct {
 	remoteCli remote.Client
@@ -37,7 +33,6 @@ func (a *App) Run(serverId string) error {
 	return nil
 }
 
-// 收到消息
 func (a *App) readChanMsg() {
 	//收到的是 其他nas client发送的消息
 	for {
@@ -45,27 +40,30 @@ func (a *App) readChanMsg() {
 		case msg := <-a.readChan:
 			var remoteMsg remote.Msg
 			json.Unmarshal(msg, &remoteMsg)
+			logs.Info("app read msg: %v", remoteMsg)
 			session := remote.NewSession(a.remoteCli, &remoteMsg)
 			session.SetData(remoteMsg.SessionData)
 			//根据路由消息 发送给对应的handler进行处理
 			router := remoteMsg.Router
 			if handlerFunc := a.handlers[router]; handlerFunc != nil {
-				result := handlerFunc(session, remoteMsg.Body.Data)
-				message := remoteMsg.Body
-				var body []byte
-				if result != nil {
-					body, _ = json.Marshal(result)
-				}
-				message.Data = body
-				//得到结果了 发送给connector
-				responseMsg := &remote.Msg{
-					Src:  remoteMsg.Dst, //目标的位置
-					Dst:  remoteMsg.Src,
-					Body: message,
-					Uid:  remoteMsg.Uid,
-					Cid:  remoteMsg.Cid,
-				}
-				a.writeChan <- responseMsg
+				go func() {
+					result := handlerFunc(session, remoteMsg.Body.Data)
+					message := remoteMsg.Body
+					var body []byte
+					if result != nil {
+						body, _ = json.Marshal(result)
+					}
+					message.Data = body
+					//得到结果了 发送给connector
+					responseMsg := &remote.Msg{
+						Src:  remoteMsg.Dst,
+						Dst:  remoteMsg.Src,
+						Body: message,
+						Uid:  remoteMsg.Uid,
+						Cid:  remoteMsg.Cid,
+					}
+					a.writeChan <- responseMsg
+				}()
 			}
 		}
 	}

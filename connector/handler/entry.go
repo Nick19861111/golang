@@ -35,12 +35,11 @@ func (h *EntryHandler) Entry(session *net.Session, body []byte) (any, error) {
 		return common.F(biz.TokenInfoError), nil
 	}
 	//根据uid 去mongo中查询用户 如果用户不存在 生成一个用户
-	user, err := h.userService.FindAndSaveByUid(context.TODO(), uid, req.UserInfo)
+	user, err := h.userService.FindAndSaveUserByUid(context.TODO(), uid, req.UserInfo)
 	if err != nil {
 		return common.F(biz.SqlError), nil
 	}
 	session.Uid = uid
-	//进入游戏返回用户信息和一个游戏的配置信息
 	return common.S(map[string]any{
 		"userInfo": user,
 		"config":   game.Conf.GetFrontGameConfig(),

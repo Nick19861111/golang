@@ -1,6 +1,6 @@
 {
   "nats": {
-    "url": "nats://localhost:4222"
+    "url": "nats://nats.qp.svc.cluster.local:4222"
   },
   "connector": [
     {
